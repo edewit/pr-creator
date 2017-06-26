@@ -19,7 +19,7 @@
   <properties>
     <version.wildfly.swarm>2017.6.1</version.wildfly.swarm>
     <version.resteasy>3.0.19.Final</version.resteasy>
-    <version.launchpad>1.0.0-SNAPSHOT</version.launchpad>
+    <version.launchpad>7-SNAPSHOT</version.launchpad>
     <version.forge>3.7.1.Final</version.forge>
   </properties>
 
@@ -50,6 +50,11 @@
 
     <dependency>
       <groupId>org.wildfly.swarm</groupId>
+      <artifactId>jaxrs-jsonp</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.wildfly.swarm</groupId>
       <artifactId>cdi</artifactId>
     </dependency>
 
@@ -75,13 +80,8 @@
 
     <dependency>
       <groupId>io.openshift.launchpad</groupId>
-      <artifactId>launchpad-addon</artifactId>
+      <artifactId>launchpad-addon-catalog</artifactId>
       <version>${version.launchpad}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>projects-api</artifactId>
-      <version>${version.forge}</version>
     </dependency>
     <dependency>
       <groupId>org.kohsuke</groupId>
@@ -97,6 +97,11 @@
       <groupId>org.asciidoctor</groupId>
       <artifactId>asciidoctorj</artifactId>
       <version>1.5.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.freemarker</groupId>
+      <artifactId>freemarker</artifactId>
+      <version>2.3.23</version>
     </dependency>
   </dependencies>
 

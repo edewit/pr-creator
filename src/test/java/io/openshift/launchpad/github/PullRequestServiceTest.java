@@ -3,7 +3,7 @@ package io.openshift.launchpad.github;
 import java.util.Collections;
 
 import io.openshift.launchpad.catalog.Booster;
-import org.apache.commons.lang3.tuple.Pair;
+import io.openshift.launchpad.catalog.Mission;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -32,10 +32,10 @@ public class PullRequestServiceTest {
         Booster booster = new Booster();
         booster.setGithubRepo("openshiftio-vertx-boosters/vertx-http-booster");
         String mission = "impossible";
-        booster.setMission(mission);
+        booster.setMission(new Mission(mission));
 
         //when
-        pullRequestService.createPrs(Collections.singletonList(booster), mission);
+        pullRequestService.fork(Collections.singletonList(booster), mission);
     }
 
 }

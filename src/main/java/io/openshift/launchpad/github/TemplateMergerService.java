@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.util.Collections;
 import java.util.HashMap;
 
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
@@ -16,7 +16,7 @@ import org.asciidoctor.Asciidoctor;
 /**
  * Service that can merge a adoc file into a template.
  */
-@Singleton
+@ApplicationScoped
 public class TemplateMergerService {
 
     public String convertToAsciidoc(File adocFile) {
@@ -26,7 +26,7 @@ public class TemplateMergerService {
 
     public File mergeTemplate(File workingFolder, String html) throws IOException {
         File tempFile = File.createTempFile("output", "html");
-        Configuration configuration = new Configuration();
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_23);
         configuration.setDirectoryForTemplateLoading(new File(workingFolder, ".openshiftio"));
         try {
             OutputStreamWriter out = new FileWriter(tempFile);

@@ -28,8 +28,9 @@ public class PullRequestService {
 
     /**
      * Is this PR an update of the booster index.html file
+     *
      * @param repoName the repo to check
-     * @param pr the PR number to check
+     * @param pr       the PR number to check
      * @return the name of the mission to update or null if this is not a documentation update
      */
     public String isDocumentationUpdated(String repoName, Integer pr) {
@@ -51,21 +52,27 @@ public class PullRequestService {
         return null;
     }
 
+    public String getDoc(String missionName) {
+        return map.entrySet().stream().filter(e -> e.getValue().equals(missionName)).findFirst()
+                .orElseThrow(() -> new RuntimeException("key not found")).getValue();
+    }
 
     /**
      * Create PRs for the boosters that have an index.html that needs updating.
+     *
      * @param boosterList list of boosters all boosters
      * @param missionName the name of the mission to update.
+     * @return the location of the fork.
      */
-    public Git createPrs(List<Booster> boosterList, String missionName) {
+    public File fork(List<Booster> boosterList, String missionName) {
         try {
             for (Booster booster : boosterList) {
-                if (missionName.equals(booster.getMission())) {
+                if (missionName.equals(booster.getMission().getName())) {
                     String githubRepo = booster.getGithubRepo();
                     GitHub gitHub = GitHub.connectUsingOAuth(System.getenv("GITHUB_TOKEN"));
 
                     GHRepository fork = gitHub.getRepository(githubRepo).fork();
-                    return checkout(fork);
+                    return checkout(fork).getRepository().getWorkTree();
                 }
             }
         } catch (IOException | GitAPIException | URISyntaxException e) {
@@ -74,16 +81,25 @@ public class PullRequestService {
         return null;
     }
 
-    private Git checkout(GHRepository gitHubRepository) throws IOException, GitAPIException, URISyntaxException {
-        File path = Files.createTempDirectory("checkout").toFile();
-        return Git.cloneRepository().setDirectory(path)
-                .setURI(gitHubRepository.gitHttpTransportUrl()).call();
-    }
-
     public void createPullRequest(Git gitRepo) throws GitAPIException {
         createBranch(gitRepo);
         commit(gitRepo);
         push(gitRepo);
+    }
+
+    public File checkout(String repoName) throws IOException {
+        GitHub gitHub = GitHub.connectAnonymously();
+        try (Git git = checkout(gitHub.getRepository(repoName))) {
+            return git.getRepository().getWorkTree();
+        } catch (GitAPIException | URISyntaxException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private Git checkout(GHRepository gitHubRepository) throws IOException, GitAPIException, URISyntaxException {
+        File path = Files.createTempDirectory("checkout").toFile();
+        return Git.cloneRepository().setDirectory(path)
+                .setURI(gitHubRepository.gitHttpTransportUrl()).call();
     }
 
     private void createBranch(Git gitRepo) throws GitAPIException {
