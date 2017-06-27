@@ -1,10 +1,19 @@
 package io.openshift.launchpad.github;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.Map;
 
 import io.openshift.launchpad.catalog.Booster;
 import io.openshift.launchpad.catalog.Mission;
+import io.openshift.launchpad.github.model.Mapping;
+import org.jboss.arquillian.junit.InSequence;
 import org.junit.Test;
+import org.kohsuke.github.GHBranch;
+import org.kohsuke.github.GitHub;
 
 import static org.junit.Assert.*;
 
@@ -13,29 +22,59 @@ import static org.junit.Assert.*;
  */
 public class PullRequestServiceTest {
 
+    private static final String GITHUB_REPO = "openshiftio-vertx-boosters/vertx-http-booster";
+
+    private PullRequestService pullRequestService = new PullRequestService();
+
     @Test
     public void isDocumentationUpdated() throws Exception {
         //given
-        PullRequestService pullRequestService = new PullRequestService();
 
         //when
-        String boosterName = pullRequestService.isDocumentationUpdated("openshiftio/appdev-documentation/", 295);
+        Mapping boosterName = pullRequestService.isDocumentationUpdated("openshiftio/appdev-documentation/", 295);
 
         //then
         assertNull(boosterName);
     }
 
     @Test
-    public void shouldCreatePrs() {
+    public void shouldForkRepoAndCreatePR() throws IOException {
+        /* ---shouldForkRepo --- */
         //given
-        PullRequestService pullRequestService = new PullRequestService();
         Booster booster = new Booster();
-        booster.setGithubRepo("openshiftio-vertx-boosters/vertx-http-booster");
+        booster.setGithubRepo(GITHUB_REPO);
         String mission = "impossible";
         booster.setMission(new Mission(mission));
 
         //when
-        pullRequestService.fork(Collections.singletonList(booster), mission);
+        File fork = pullRequestService.fork(Collections.singletonList(booster), mission);
+
+        //then
+        assertTrue(fork.exists());
+
+        /* ---shouldCreatePR--- */
+        //given
+        File file = fork.listFiles()[0];
+        try (PrintWriter printWriter = new PrintWriter(file)) {
+            printWriter.write("changed");
+        }
+
+        //when
+        pullRequestService.createPullRequest(fork);
+
+        //then
+        GitHub gitHub = PullRequestService.getGitHub();
+        Map<String, GHBranch> branches = gitHub.getMyself().getRepository("vertx-http-booster").getBranches();
+        assertTrue(branches.containsKey("documentation-update"));
     }
 
+    @Test
+    public void shouldCheckout() throws IOException {
+        //when
+        File checkout = pullRequestService.checkout(GITHUB_REPO);
+
+        //then
+        assertTrue(checkout.exists());
+        assertNotEquals(new String[0], checkout.list());
+    }
 }

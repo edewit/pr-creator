@@ -5,13 +5,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collections;
-import java.util.HashMap;
 
 import javax.enterprise.context.ApplicationScoped;
 
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import org.asciidoctor.Asciidoctor;
+import org.asciidoctor.SafeMode;
+
+import static org.asciidoctor.OptionsBuilder.options;
 
 /**
  * Service that can merge a adoc file into a template.
@@ -21,7 +23,7 @@ public class TemplateMergerService {
 
     public String convertToAsciidoc(File adocFile) {
         Asciidoctor asciidoctor = Asciidoctor.Factory.create();
-        return asciidoctor.convertFile(adocFile, new HashMap<>());
+        return asciidoctor.convertFile(adocFile, options().toFile(false).safe(SafeMode.UNSAFE).asMap());
     }
 
     public File mergeTemplate(File workingFolder, String html) throws IOException {
