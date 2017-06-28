@@ -1,16 +1,14 @@
 package io.openshift.launchpad.github;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Map;
 
-import io.openshift.launchpad.catalog.Booster;
-import io.openshift.launchpad.catalog.Mission;
+import io.openshift.booster.catalog.Booster;
+import io.openshift.booster.catalog.Mission;
 import io.openshift.launchpad.github.model.Mapping;
-import org.jboss.arquillian.junit.InSequence;
 import org.junit.Test;
 import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GitHub;

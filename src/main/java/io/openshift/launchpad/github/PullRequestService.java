@@ -9,7 +9,7 @@ import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import io.openshift.launchpad.catalog.Booster;
+import io.openshift.booster.catalog.Booster;
 import io.openshift.launchpad.github.model.Mapping;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
