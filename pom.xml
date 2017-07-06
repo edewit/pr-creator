@@ -21,6 +21,7 @@
     <version.resteasy>3.0.19.Final</version.resteasy>
     <version.booster-catalog>1</version.booster-catalog>
     <version.forge>3.7.1.Final</version.forge>
+    <version.slf4j>1.7.25</version.slf4j>
   </properties>
 
   <dependencyManagement>
@@ -50,6 +51,18 @@
       <groupId>org.wildfly.swarm</groupId>
       <artifactId>cdi</artifactId>
     </dependency>
+
+	<dependency>
+	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-api</artifactId>
+	    <version>${version.slf4j}</version>
+	</dependency>
+
+	<dependency>
+	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-jdk14</artifactId>
+	    <version>${version.slf4j}</version>
+	</dependency>
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
