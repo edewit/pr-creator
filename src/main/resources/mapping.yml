@@ -1,1 +1,2 @@
-docs/topics/rest-level-0-mission-intro-paragraph.adoc: rest-http
+docs/topics/frontend/rest-http-index.adoc: rest-http
+docs/topics/frontend/health-check-index.adoc: health-check
