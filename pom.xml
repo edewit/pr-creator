@@ -52,17 +52,23 @@
       <artifactId>cdi</artifactId>
     </dependency>
 
-	<dependency>
-	    <groupId>org.slf4j</groupId>
-	    <artifactId>slf4j-api</artifactId>
-	    <version>${version.slf4j}</version>
-	</dependency>
+    <dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>asciidoctorj</artifactId>
+      <version>2017.8.0-SNAPSHOT</version>
+    </dependency>
 
-	<dependency>
-	    <groupId>org.slf4j</groupId>
-	    <artifactId>slf4j-jdk14</artifactId>
-	    <version>${version.slf4j}</version>
-	</dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${version.slf4j}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>${version.slf4j}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -104,16 +110,12 @@
       <artifactId>org.eclipse.jgit</artifactId>
       <version>4.7.1.201706071930-r</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>org.asciidoctor</groupId>
       <artifactId>asciidoctorj</artifactId>
       <version>1.5.4</version>
-    </dependency>
-	<dependency>
-      <groupId>org.jruby</groupId>
-      <artifactId>jruby-complete</artifactId>
-      <version>9.1.6.0</version>
-    </dependency>    
+      <scope>provided</scope>
+    </dependency>-->
     <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
@@ -140,6 +142,11 @@
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
+          <!--<archive>
+            <manifestEntries>
+              <Dependencies>org.asciidoctor</Dependencies>
+            </manifestEntries>
+          </archive>-->
         </configuration>
       </plugin>
 
