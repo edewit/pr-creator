@@ -5,9 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import com.google.common.io.Files;
 import org.apache.commons.io.IOUtils;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,6 +18,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class TemplateMergerServiceTest {
     private TemplateMergerService templateMergerService = new TemplateMergerService();
+
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Test
     public void shouldConvertToAsciidoc() throws IOException {
@@ -41,7 +45,7 @@ public class TemplateMergerServiceTest {
     public void shouldMergeTemplate() throws IOException {
         //given
         String html = "<h1>Some nice html asciidoc</h1>";
-        File workingFolder = Files.createTempDir();
+        File workingFolder = folder.newFolder();
         File templateFolder = new File(workingFolder, ".openshiftio");
         templateFolder.mkdir();
         try (PrintWriter printWriter = new PrintWriter(new File(templateFolder, "index.html.flt"))) {
