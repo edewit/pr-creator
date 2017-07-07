@@ -17,10 +17,9 @@
   <name>Launchpad: Documentation PR creator</name>
 
   <properties>
-    <version.wildfly.swarm>2017.6.1</version.wildfly.swarm>
+    <version.wildfly.swarm>2017.7.0</version.wildfly.swarm>
     <version.resteasy>3.0.19.Final</version.resteasy>
-    <version.booster-catalog>1</version.booster-catalog>
-    <version.forge>3.7.1.Final</version.forge>
+    <version.booster-catalog>2-SNAPSHOT</version.booster-catalog>
     <version.slf4j>1.7.25</version.slf4j>
   </properties>
 
@@ -96,26 +95,10 @@
       <version>${version.booster-catalog}</version>
     </dependency>
     <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
-      <version>1.18</version>
-    </dependency>
-    <dependency>
       <groupId>org.kohsuke</groupId>
       <artifactId>github-api</artifactId>
       <version>1.85</version>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.jgit</groupId>
-      <artifactId>org.eclipse.jgit</artifactId>
-      <version>4.7.1.201706071930-r</version>
-    </dependency>
-    <!--<dependency>
-      <groupId>org.asciidoctor</groupId>
-      <artifactId>asciidoctorj</artifactId>
-      <version>1.5.4</version>
-      <scope>provided</scope>
-    </dependency>-->
     <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
