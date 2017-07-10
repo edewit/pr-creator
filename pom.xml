@@ -125,11 +125,6 @@
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
-          <!--<archive>
-            <manifestEntries>
-              <Dependencies>org.asciidoctor</Dependencies>
-            </manifestEntries>
-          </archive>-->
         </configuration>
       </plugin>
 

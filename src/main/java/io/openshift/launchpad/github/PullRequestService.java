@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,9 +60,10 @@ public class PullRequestService {
      *
      * @param boosterList list of boosters all boosters
      * @param missionId the id of the mission to update.
-     * @return the location of the fork.
+     * @return the locations of the forks.
      */
-    public File fork(List<Booster> boosterList, String missionId) {
+    public List<File> fork(List<Booster> boosterList, String missionId) {
+        List<File> result = new ArrayList<>();
         try {
             for (Booster booster : boosterList) {
                 if (missionId.equals(booster.getMission().getId())) {
@@ -69,13 +71,13 @@ public class PullRequestService {
                     GitHub gitHub = getGitHub();
 
                     GHRepository fork = gitHub.getRepository(githubRepo).fork();
-                    return checkout(fork).getRepository().getWorkTree();
+                    result.add(checkout(fork).getRepository().getWorkTree());
                 }
             }
         } catch (IOException | GitAPIException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        return null;
+        return result;
     }
 
     static GitHub getGitHub() throws IOException {
@@ -87,9 +89,20 @@ public class PullRequestService {
             createBranch(gitRepo);
             commit(gitRepo);
             push(gitRepo);
+            createPR(gitRepo);
         } catch (IOException | GitAPIException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void createPR(Git gitRepo) throws IOException {
+        String url = gitRepo.getRepository().getConfig().getString( "remote", "origin", "url" );
+        String name = url.substring(url.lastIndexOf('/'), url.lastIndexOf('.'));
+
+        GitHub hub = getGitHub();
+        GHRepository repo = hub.getRepository(hub.getMyself().getLogin() + name);
+        String head = hub.getMyself().getLogin() + ":" + "documentation-update";
+        repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
     }
 
     public File checkout(String repoName) throws IOException {

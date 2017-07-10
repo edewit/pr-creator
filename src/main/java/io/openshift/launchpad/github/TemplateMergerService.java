@@ -7,11 +7,14 @@ import java.io.OutputStreamWriter;
 import java.util.Collections;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 import org.asciidoctor.Asciidoctor;
 import org.asciidoctor.SafeMode;
+import org.slf4j.Logger;
 
 import static org.asciidoctor.OptionsBuilder.options;
 
@@ -20,6 +23,9 @@ import static org.asciidoctor.OptionsBuilder.options;
  */
 @ApplicationScoped
 public class TemplateMergerService {
+
+    @Inject
+    private Logger logger;
 
     public String convertToAsciidoc(File adocFile) {
         Asciidoctor asciidoctor = Asciidoctor.Factory.create();
@@ -33,8 +39,9 @@ public class TemplateMergerService {
         try {
             OutputStreamWriter out = new FileWriter(tempFile);
             configuration.getTemplate("index.html.flt").process(Collections.singletonMap("html", html), out);
-        } catch (TemplateException e) {
-            throw new RuntimeException("could not transform template");
+        } catch (TemplateException | TemplateNotFoundException e) {
+            logger.warn("could not apply template", e);
+            return null;
         }
 
         return tempFile;

@@ -2,8 +2,9 @@ package io.openshift.launchpad.github;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
-
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -26,9 +27,9 @@ import io.openshift.launchpad.github.model.PullRequest;
 @ApplicationScoped
 public class WebhookEndpoint {
 
-	@Inject
-	private Logger logger;
-	
+    @Inject
+    private Logger logger;
+
     @Inject
     private PullRequestService pullRequest;
 
@@ -48,21 +49,28 @@ public class WebhookEndpoint {
     @Path("/hook")
     @Consumes(MediaType.APPLICATION_JSON)
     public void hook(PullRequest payload) throws IOException {
-    	logger.info("Analising PR for booster documentation update ({})", payload);
+        logger.info("Analising PR for booster documentation update ({})", payload);
         Mapping mapping = pullRequest.isDocumentationUpdated(payload.getRepository().getFullName(), payload.getNumber());
         
         if (mapping != null) {
-        	logger.info("this PR updates mission {}", mapping.getMissionName());
-            File location = pullRequest.fork(boosters, mapping.getMissionName());
-            logger.debug("forked boosters {}", (Object)location.list());
-            File documentationFolder = pullRequest.checkout(payload.getRepository().getFullName());
-            logger.debug("doc checkout {}", (Object)documentationFolder.list());
-            String html = templateMergerService.convertToAsciidoc(new File(documentationFolder, mapping.getDocumentationLocation()));
-            File file = templateMergerService.mergeTemplate(location, html);
-            file.renameTo(location.listFiles(name -> name.getName().equals(file.getName()))[0]);
-            pullRequest.createPullRequest(location);
+            logger.info("This PR updates mission {}", mapping.getMissionName());
+            List<File> locations = pullRequest.fork(boosters, mapping.getMissionName());
+            for (File location : locations) {
+                File documentationFolder = pullRequest.checkout(payload.getRepository().getFullName());
+                String html = templateMergerService.convertToAsciidoc(new File(documentationFolder, mapping.getDocumentationLocation()));
+                File file = templateMergerService.mergeTemplate(location, html);
+                if (file != null) {
+                    Optional<java.nio.file.Path> path = Files.walk(location.toPath()).filter(
+                        name -> name.getFileName().toString().equals("index.html")).findFirst();
+                    if (path.isPresent()) {
+                        logger.info("Updated booster, creating PR on booster project");
+                        file.renameTo(path.get().toFile());
+                        pullRequest.createPullRequest(location);
+                    }
+                }
+           }
         } else {
-        	logger.info("no booster documentation changes found");
+            logger.info("No booster documentation changes found");
         }
     }
 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import io.openshift.booster.catalog.Booster;
@@ -45,9 +46,10 @@ public class PullRequestServiceTest {
         booster.setMission(new Mission(mission));
 
         //when
-        File fork = pullRequestService.fork(Collections.singletonList(booster), mission);
+        List<File> forks = pullRequestService.fork(Collections.singletonList(booster), mission);
 
         //then
+        File fork = forks.get(0);
         assertTrue(fork.exists());
 
         /* ---shouldCreatePR--- */
