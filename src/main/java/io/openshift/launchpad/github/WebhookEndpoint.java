@@ -53,7 +53,7 @@ public class WebhookEndpoint {
         Mapping mapping = pullRequest.isDocumentationUpdated(payload.getRepository().getFullName(), payload.getNumber());
         
         if (mapping != null) {
-            logger.info("This PR updates mission {}", mapping.getMissionName());
+            logger.info("This PR updates mission '{}'", mapping.getMissionName());
             List<File> locations = pullRequest.fork(boosters, mapping.getMissionName());
             for (File location : locations) {
                 File documentationFolder = pullRequest.checkout(payload.getRepository().getFullName());

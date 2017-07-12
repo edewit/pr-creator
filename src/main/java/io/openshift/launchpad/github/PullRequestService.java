@@ -15,7 +15,9 @@ import io.openshift.launchpad.github.model.Mapping;
 import io.openshift.launchpad.github.model.PullRequest;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
@@ -92,36 +94,45 @@ public class PullRequestService {
             createBranch(gitRepo);
             commit(gitRepo);
             push(gitRepo);
-            Integer pr = createPR(gitRepo);
+            GHPullRequest pr = createPR(gitRepo);
             linkPR(pr, pullRequest);
         } catch (IOException | GitAPIException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void linkPR(Integer pullRequestNumber, PullRequest origPR) throws IOException {
+    private void linkPR(GHPullRequest pullRequest, PullRequest origPR) throws IOException {
         GHPullRequest origPRGH = getGitHub().getRepository(origPR.getRepository().getFullName()).getPullRequest(origPR.getNumber());
-        origPRGH.comment("automatic PR created to update the booster #" + pullRequestNumber);
+        origPRGH.comment("automatic PR created to update the booster " + pullRequest.getHtmlUrl());
     }
 
-    private Integer createPR(Git gitRepo) throws IOException {
+    private GHPullRequest createPR(Git gitRepo) throws IOException {
         String url = gitRepo.getRepository().getConfig().getString( "remote", "origin", "url" );
         String name = url.substring(url.lastIndexOf('/'), url.lastIndexOf('.'));
 
         GitHub hub = getGitHub();
         GHRepository repo = hub.getRepository(hub.getMyself().getLogin() + name);
         String head = hub.getMyself().getLogin() + ":" + "documentation-update";
-        GHPullRequest pr = repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
-        return pr.getNumber();
+        return repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
     }
 
     public File checkout(String repoName) throws IOException {
         GitHub gitHub = GitHub.connectAnonymously();
-        try (Git git = checkout(gitHub.getRepository(repoName))) {
+        GHRepository repo = gitHub.getRepository(repoName);
+        try (Git git = checkout(repo)) {
+            updateFork(git, repo);
             return git.getRepository().getWorkTree();
         } catch (GitAPIException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void updateFork(Git git, GHRepository repo) throws GitAPIException, URISyntaxException, IOException {
+        RemoteAddCommand addCommand = git.remoteAdd();
+        addCommand.setUri(new URIish(repo.getParent().gitHttpTransportUrl()));
+        addCommand.setName("upstream");
+        addCommand.call();
+        git.pull().setRemote("upstream").setRemoteBranchName("master").call();
     }
 
     private Git checkout(GHRepository gitHubRepository) throws IOException, GitAPIException, URISyntaxException {

@@ -60,7 +60,7 @@ public class PullRequestServiceTest {
         }
 
         //when
-        pullRequestService.createPullRequest(fork);
+        pullRequestService.createPullRequest(fork, null);
 
         //then
         GitHub gitHub = PullRequestService.getGitHub();

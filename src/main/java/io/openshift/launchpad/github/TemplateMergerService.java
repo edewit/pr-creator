@@ -40,7 +40,7 @@ public class TemplateMergerService {
             OutputStreamWriter out = new FileWriter(tempFile);
             configuration.getTemplate("index.html.flt").process(Collections.singletonMap("html", html), out);
         } catch (TemplateException | TemplateNotFoundException e) {
-            logger.warn("could not apply template");
+            logger.warn("could not apply template '{}'", workingFolder);
             return null;
         }
 
