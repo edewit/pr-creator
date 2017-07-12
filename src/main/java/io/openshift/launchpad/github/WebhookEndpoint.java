@@ -65,7 +65,7 @@ public class WebhookEndpoint {
                     if (path.isPresent()) {
                         logger.info("Updated booster, creating PR on booster project");
                         file.renameTo(path.get().toFile());
-                        pullRequest.createPullRequest(location);
+                        pullRequest.createPullRequest(location, payload);
                     }
                 }
            }

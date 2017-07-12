@@ -12,9 +12,12 @@ import javax.enterprise.context.ApplicationScoped;
 
 import io.openshift.booster.catalog.Booster;
 import io.openshift.launchpad.github.model.Mapping;
+import io.openshift.launchpad.github.model.PullRequest;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -84,25 +87,32 @@ public class PullRequestService {
         return GitHub.connectUsingOAuth(System.getenv("GITHUB_TOKEN"));
     }
 
-    public void createPullRequest(File repo) {
+    public void createPullRequest(File repo, PullRequest pullRequest) {
         try (Git gitRepo = Git.open(repo)) {
             createBranch(gitRepo);
             commit(gitRepo);
             push(gitRepo);
-            createPR(gitRepo);
+            Integer pr = createPR(gitRepo);
+            linkPR(pr, pullRequest);
         } catch (IOException | GitAPIException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void createPR(Git gitRepo) throws IOException {
+    private void linkPR(Integer pullRequestNumber, PullRequest origPR) throws IOException {
+        GHPullRequest origPRGH = getGitHub().getRepository(origPR.getRepository().getFullName()).getPullRequest(origPR.getNumber());
+        origPRGH.comment("automatic PR created to update the booster #" + pullRequestNumber);
+    }
+
+    private Integer createPR(Git gitRepo) throws IOException {
         String url = gitRepo.getRepository().getConfig().getString( "remote", "origin", "url" );
         String name = url.substring(url.lastIndexOf('/'), url.lastIndexOf('.'));
 
         GitHub hub = getGitHub();
         GHRepository repo = hub.getRepository(hub.getMyself().getLogin() + name);
         String head = hub.getMyself().getLogin() + ":" + "documentation-update";
-        repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
+        GHPullRequest pr = repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
+        return pr.getNumber();
     }
 
     public File checkout(String repoName) throws IOException {
@@ -122,6 +132,7 @@ public class PullRequestService {
 
     private void createBranch(Git gitRepo) throws GitAPIException {
         String name = "documentation-update";
+        gitRepo.branchDelete().setBranchNames(name).setForce(true).call();
         gitRepo.branchCreate().setName(name).call();
         gitRepo.checkout().setName(name).call();
     }
