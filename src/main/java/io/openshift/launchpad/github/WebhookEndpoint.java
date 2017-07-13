@@ -56,7 +56,7 @@ public class WebhookEndpoint {
             logger.info("This PR updates mission '{}'", mapping.getMissionName());
             List<File> locations = pullRequest.fork(boosters, mapping.getMissionName());
             for (File location : locations) {
-                File documentationFolder = pullRequest.checkout(payload.getRepository().getFullName());
+                File documentationFolder = pullRequest.checkout(payload);
                 String html = templateMergerService.convertToAsciidoc(new File(documentationFolder, mapping.getDocumentationLocation()));
                 File file = templateMergerService.mergeTemplate(location, html);
                 if (file != null) {

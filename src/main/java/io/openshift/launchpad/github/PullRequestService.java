@@ -14,11 +14,14 @@ import io.openshift.booster.catalog.Booster;
 import io.openshift.launchpad.github.model.Mapping;
 import io.openshift.launchpad.github.model.PullRequest;
 
+import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
@@ -116,14 +119,31 @@ public class PullRequestService {
         return repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
     }
 
-    public File checkout(String repoName) throws IOException {
-        GitHub gitHub = GitHub.connectAnonymously();
-        GHRepository repo = gitHub.getRepository(repoName);
+    public File checkout(PullRequest pullRequest) throws IOException {
+        GitHub gitHub = getGitHub();
+        GHRepository repo = gitHub.getRepository(pullRequest.getRepository().getFullName());
         try (Git git = checkout(repo)) {
-            updateFork(git, repo);
+            switchBranch(git, repo, pullRequest.getNumber());
             return git.getRepository().getWorkTree();
         } catch (GitAPIException | URISyntaxException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void switchBranch(Git git, GHRepository repo, Integer prNumber) throws IOException, GitAPIException, URISyntaxException {
+        GHCommitPointer head = repo.getPullRequest(prNumber).getHead();
+        String url = head.getRepository().gitHttpTransportUrl();
+        if (!url.equals(repo.getPullRequest(prNumber).getRepository().gitHttpTransportUrl())) {
+        	git.branchCreate().setName(head.getRef()).call();
+        	
+        	RemoteAddCommand addCommand = git.remoteAdd();
+            addCommand.setUri(new URIish(url));
+            addCommand.setName("pr");
+            addCommand.call();
+            
+        	git.pull().setRemote("pr").setRemoteBranchName(head.getRef()).call();
+        } else {
+        	git.checkout().setCreateBranch(true).setName(head.getRef()).call();
         }
     }
 
@@ -137,8 +157,12 @@ public class PullRequestService {
 
     private Git checkout(GHRepository gitHubRepository) throws IOException, GitAPIException, URISyntaxException {
         File path = Files.createTempDirectory("checkout").toFile();
-        return Git.cloneRepository().setDirectory(path)
+        Git git = Git.cloneRepository().setDirectory(path)
                 .setURI(gitHubRepository.gitHttpTransportUrl()).call();
+        if (gitHubRepository.isFork()) {
+        	updateFork(git, gitHubRepository);
+        }
+        return git;
     }
 
     private void createBranch(Git gitRepo) throws GitAPIException {
