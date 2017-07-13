@@ -10,15 +10,9 @@ import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import io.openshift.booster.catalog.Booster;
-import io.openshift.launchpad.github.model.Mapping;
-import io.openshift.launchpad.github.model.PullRequest;
-
-import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.kohsuke.github.GHCommitPointer;
@@ -29,13 +23,18 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 import org.yaml.snakeyaml.Yaml;
 
+import io.openshift.booster.catalog.Booster;
+import io.openshift.launchpad.github.model.Mapping;
+import io.openshift.launchpad.github.model.PullRequest;
+
 /**
  * Service for pull requests.
  */
 @ApplicationScoped
 public class PullRequestService {
 
-    private Map<String, String> map = (Map<String, String>) new Yaml().load(getClass().getResourceAsStream("/mapping.yml"));
+    private static final String BRANCH_NAME = "documentation-update";
+	private Map<String, String> map = (Map<String, String>) new Yaml().load(getClass().getResourceAsStream("/mapping.yml"));
 
     /**
      * Is this PR an update of the booster index.html file
@@ -64,9 +63,9 @@ public class PullRequestService {
     }
 
     /**
-     * Create PRs for the boosters that have an index.html that needs updating.
+     * Find the boosters that need updating and create forks if needed.
      *
-     * @param boosterList list of boosters all boosters
+     * @param boosterList list of all boosters
      * @param missionId the id of the mission to update.
      * @return the locations of the forks.
      */
@@ -92,6 +91,12 @@ public class PullRequestService {
         return GitHub.connectUsingOAuth(System.getenv("GITHUB_TOKEN"));
     }
 
+    /**
+     * Create a PR for a change that was made in this repo.
+     * 
+     * @param repo with the change we want a PR for
+     * @param pullRequest the pull request that initiated this change.
+     */
     public void createPullRequest(File repo, PullRequest pullRequest) {
         try (Git gitRepo = Git.open(repo)) {
             createBranch(gitRepo);
@@ -104,30 +109,21 @@ public class PullRequestService {
         }
     }
 
-    private void linkPR(GHPullRequest pullRequest, PullRequest origPR) throws IOException {
-        GHPullRequest origPRGH = getGitHub().getRepository(origPR.getRepository().getFullName()).getPullRequest(origPR.getNumber());
-        origPRGH.comment("automatic PR created to update the booster " + pullRequest.getHtmlUrl());
-    }
-
-    private GHPullRequest createPR(Git gitRepo) throws IOException {
-        String url = gitRepo.getRepository().getConfig().getString( "remote", "origin", "url" );
-        String name = url.substring(url.lastIndexOf('/'), url.lastIndexOf('.'));
-
-        GitHub hub = getGitHub();
-        GHRepository repo = hub.getRepository(hub.getMyself().getLogin() + name);
-        String head = hub.getMyself().getLogin() + ":" + "documentation-update";
-        return repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
-    }
-
+    /**
+     * Checkout the pull request with the proposed change
+     * @param pullRequest the pull request to checkout
+     * @return the location of the checked out repository
+     * @throws IOException
+     */
     public File checkout(PullRequest pullRequest) throws IOException {
-        GitHub gitHub = getGitHub();
-        GHRepository repo = gitHub.getRepository(pullRequest.getRepository().getFullName());
-        try (Git git = checkout(repo)) {
-            switchBranch(git, repo, pullRequest.getNumber());
-            return git.getRepository().getWorkTree();
-        } catch (GitAPIException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+    	GitHub gitHub = getGitHub();
+    	GHRepository repo = gitHub.getRepository(pullRequest.getRepository().getFullName());
+    	try (Git git = checkout(repo)) {
+    		switchBranch(git, repo, pullRequest.getNumber());
+    		return git.getRepository().getWorkTree();
+    	} catch (GitAPIException | URISyntaxException e) {
+    		throw new RuntimeException(e);
+    	}
     }
 
     private void switchBranch(Git git, GHRepository repo, Integer prNumber) throws IOException, GitAPIException, URISyntaxException {
@@ -146,6 +142,22 @@ public class PullRequestService {
         	git.checkout().setCreateBranch(true).setName(head.getRef()).call();
         }
     }
+
+    private void linkPR(GHPullRequest pullRequest, PullRequest origPR) throws IOException {
+        GHPullRequest origPRGH = getGitHub().getRepository(origPR.getRepository().getFullName()).getPullRequest(origPR.getNumber());
+        origPRGH.comment("automatic PR created to update the booster " + pullRequest.getHtmlUrl());
+    }
+
+    private GHPullRequest createPR(Git gitRepo) throws IOException {
+        String url = gitRepo.getRepository().getConfig().getString( "remote", "origin", "url" );
+        String name = url.substring(url.lastIndexOf('/'), url.lastIndexOf('.'));
+
+        GitHub hub = getGitHub();
+        GHRepository repo = hub.getRepository(hub.getMyself().getLogin() + name);
+        String head = hub.getMyself().getLogin() + ":" + BRANCH_NAME;
+        return repo.getParent().createPullRequest("Doc update", head, "master", "*automatic created PR* triggerd by documentation update");
+    }
+
 
     private void updateFork(Git git, GHRepository repo) throws GitAPIException, URISyntaxException, IOException {
         RemoteAddCommand addCommand = git.remoteAdd();
@@ -166,10 +178,9 @@ public class PullRequestService {
     }
 
     private void createBranch(Git gitRepo) throws GitAPIException {
-        String name = "documentation-update";
-        gitRepo.branchDelete().setBranchNames(name).setForce(true).call();
-        gitRepo.branchCreate().setName(name).call();
-        gitRepo.checkout().setName(name).call();
+        gitRepo.branchDelete().setBranchNames(BRANCH_NAME).setForce(true).call();
+        gitRepo.branchCreate().setName(BRANCH_NAME).call();
+        gitRepo.checkout().setName(BRANCH_NAME).call();
     }
 
     private void commit(Git repo) throws GitAPIException {

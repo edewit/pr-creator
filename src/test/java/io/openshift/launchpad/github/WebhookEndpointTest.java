@@ -26,8 +26,7 @@ public class WebhookEndpointTest {
     public void test_service_invocation() {
         //given
         Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("http://localhost:8080")
-                .path("api").path("hook");
+        WebTarget target = client.target("http://localhost:8080/api/hook");
 
         //when
         PullRequest pullRequest = new PullRequest();
